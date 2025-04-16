@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, TextField } from '@mui/material';
+import { format } from 'date-fns';
 
 interface DateRangePickerProps {
 	startDate: Date | null;
@@ -14,18 +15,12 @@ export default function DateRangePicker({
 	onStartDateChange,
 	onEndDateChange,
 }: DateRangePickerProps) {
-	const [startDateInput, setStartDateInput] = useState<string>(
-		startDate ? startDate.toISOString().split('T')[0] : ''
+	const [startDateInput, setStartDateInput] = useState<Date | string>(
+		startDate ? format(startDate, 'yyyy-MM-dd') : ''
 	);
-	const [endDateInput, setEndDateInput] = useState<string>(
-		endDate ? endDate.toISOString().split('T')[0] : ''
+	const [endDateInput, setEndDateInput] = useState<Date | string>(
+		endDate ? format(endDate, 'yyyy-MM-dd') : ''
 	);
-
-	// Sync with parent state
-	useEffect(() => {
-		setStartDateInput(startDate ? startDate.toISOString().split('T')[0] : '');
-		setEndDateInput(endDate ? endDate.toISOString().split('T')[0] : '');
-	}, [startDate, endDate]);
 
 	const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value;
@@ -51,14 +46,33 @@ export default function DateRangePicker({
 		}
 	};
 
+	// // Sync with parent state
+	useEffect(() => {
+		setStartDateInput(startDate ? format(startDate, 'yyyy-MM-dd') : '');
+		setEndDateInput(endDate ? format(endDate, 'yyyy-MM-dd') : '');
+	}, [startDate, endDate]);
+
 	return (
-		<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+		<Box
+			sx={{
+				display: 'flex',
+				alignItems: 'center',
+				gap: 2,
+				flexWrap: 'wrap', // Makes it responsive
+			}}>
 			<TextField
 				label="Start Date"
 				type="date"
 				value={startDateInput}
 				onChange={handleStartDateChange}
 				InputLabelProps={{ shrink: true }}
+				sx={{
+					borderRadius: 2,
+					'& .MuiOutlinedInput-root': {
+						borderRadius: 2,
+					},
+					minWidth: 200,
+				}}
 			/>
 			<TextField
 				label="End Date"
@@ -66,6 +80,13 @@ export default function DateRangePicker({
 				value={endDateInput}
 				onChange={handleEndDateChange}
 				InputLabelProps={{ shrink: true }}
+				sx={{
+					borderRadius: 2,
+					'& .MuiOutlinedInput-root': {
+						borderRadius: 2,
+					},
+					minWidth: 200,
+				}}
 			/>
 		</Box>
 	);

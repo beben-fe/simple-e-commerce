@@ -23,7 +23,6 @@ import {
 	IconButton,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import InfoIcon from '@mui/icons-material/Info';
 import {
 	DataGrid,
 	GridColDef,
@@ -99,7 +98,7 @@ export default function CartsPage() {
 		setSelectedCartProducts({
 			products: cartProducts,
 			cartId,
-			date: cartDate,
+			date: cartDate ?? new Date(),
 		});
 		setProductDetailsOpen(true);
 	};
@@ -193,33 +192,39 @@ export default function CartsPage() {
 		);
 	}
 
+	function formatValidDate(dateInput: unknown): string {
+		const date =
+			dateInput instanceof Date && !isNaN(dateInput.getTime())
+				? dateInput
+				: new Date();
+		return date.toLocaleDateString();
+	}
+
 	// Prepare data for DataGrid
-	const rows = carts.map((cart: Cart) => {
+	const rows = carts.map((cart: Cart, index: number) => {
 		// Calculate total price
 		const totalPrice = cart.products
 			.reduce((total: number, p: CartItem) => {
 				const product = products.find(
 					(prod: Product) => prod.id === p.productId
 				);
-				return total + (product?.price || 0) * p.quantity;
+				return total + (product?.price ?? 0) * p.quantity;
 			}, 0)
 			.toFixed(2);
 
 		// Format products for display
 		const cartProducts = cart.products.map((p: CartItem) => {
 			const product = products.find((prod: Product) => prod.id === p.productId);
-			return `${product?.title || 'Unknown Product'} x ${p.quantity}`;
+			return `${product?.title ?? 'Unknown Product'} x ${p.quantity}`;
 		});
 
 		// Format date
 		const cartDate = new Date(cart.date);
-		const dateForSorting = cartDate.getTime(); // Use timestamp for sorting
 
 		return {
-			id: cart.id,
-			cartId: cart.id, // For display
-			date: dateForSorting, // Numeric timestamp for sorting
-			dateDisplay: cartDate.toLocaleDateString(), // Formatted for display
+			id: `${cart.id}-${index}`,
+			number: index + 1,
+			dateDisplay: formatValidDate(cartDate), // Formatted for display
 			products: cartProducts,
 			rawProducts: cart.products, // Keep the raw product data for the dialog
 			totalPrice: parseFloat(totalPrice), // Numeric for sorting
@@ -231,22 +236,16 @@ export default function CartsPage() {
 	// Define columns for DataGrid
 	const columns: GridColDef[] = [
 		{
-			field: 'cartId',
-			headerName: 'Cart ID',
+			field: 'number',
+			headerName: '',
 			width: 100,
-			sortable: true,
+			sortable: false,
 		},
 		{
 			field: 'dateDisplay',
 			headerName: 'Date',
 			width: 150,
-			sortable: true,
-			sortComparator: (v1, v2, param1, param2) => {
-				// Sort by the timestamp in the 'date' field
-				const a = param1.api.getCellValue(param1.id, 'date') as number;
-				const b = param2.api.getCellValue(param2.id, 'date') as number;
-				return a - b;
-			},
+			sortable: false,
 		},
 		{
 			field: 'products',
@@ -265,6 +264,8 @@ export default function CartsPage() {
 							display: 'flex',
 							alignItems: 'center',
 							width: '100%',
+							height: '100%',
+							cursor: 'pointer',
 							'& > div': {
 								mb: 0.5,
 								color: theme.palette.text.primary,
@@ -274,29 +275,25 @@ export default function CartsPage() {
 								pb: 0.5,
 								borderBottom: `1px dashed ${theme.palette.divider}`,
 							},
-						}}>
-						<Box sx={{ flexGrow: 1 }}>
-							{params.value
-								.slice(0, 2)
-								.map((product: string, index: number) => (
-									<div key={`cart-product-${index}`}>{product}</div>
-								))}
-							{params.value.length > 2 && (
-								<Typography color="text.secondary" variant="body2">
-									+{params.value.length - 2} more items
-								</Typography>
-							)}
-						</Box>
-						<IconButton
-							color="primary"
-							size="small"
-							onClick={() =>
-								handleOpenProductDetails(cartId, rawProducts, dateDisplay)
-							}
-							sx={{ flexShrink: 0, ml: 1 }}
-							title="View product details">
-							<InfoIcon />
-						</IconButton>
+						}}
+						onClick={() =>
+							handleOpenProductDetails(cartId, rawProducts, dateDisplay)
+						}>
+						<Typography
+							variant="body2"
+							noWrap
+							sx={{
+								textOverflow: 'ellipsis',
+								overflow: 'hidden',
+								whiteSpace: 'nowrap',
+								maxWidth: '100%',
+							}}>
+							{params.value.slice(0, 1).join(', ')}&nbsp;
+						</Typography>
+						<Typography variant="body2" sx={{ color: 'gray' }}>
+							{params.value.length > 1 &&
+								` +${params.value.length - 1} more items`}
+						</Typography>
 					</Box>
 				);
 			},
@@ -305,15 +302,9 @@ export default function CartsPage() {
 			field: 'totalPriceDisplay',
 			headerName: 'Total',
 			width: 120,
-			sortable: true,
+			sortable: false,
 			align: 'right',
 			headerAlign: 'right',
-			sortComparator: (v1, v2, param1, param2) => {
-				// Sort by the numeric value in 'totalPrice'
-				const a = param1.api.getCellValue(param1.id, 'totalPrice') as number;
-				const b = param2.api.getCellValue(param2.id, 'totalPrice') as number;
-				return a - b;
-			},
 		},
 		{
 			field: 'itemCount',
@@ -352,7 +343,7 @@ export default function CartsPage() {
 
 			<Box sx={{ mb: 4 }}>
 				<Paper sx={{ p: 3, mb: 3 }}>
-					<Typography variant="h6" gutterBottom>
+					<Typography gutterBottom mb={3}>
 						Filter Carts by Date
 					</Typography>
 					<Box sx={{ mb: 2 }}>
@@ -409,10 +400,10 @@ export default function CartsPage() {
 						justifyContent: 'space-between',
 						alignItems: 'center',
 					}}>
-					<span>Cart Transactions</span>
+					<Typography>Cart Transactions</Typography>
 					{isLoadingCarts && <CircularProgress size={24} sx={{ ml: 2 }} />}
 				</Typography>
-				<Box sx={{ height: 500, width: '100%' }}>
+				<Box sx={{ width: '100%', height: 350 }}>
 					<DataGrid
 						rows={rows}
 						columns={columns}
@@ -467,6 +458,33 @@ export default function CartsPage() {
 						getRowClassName={(params) =>
 							params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
 						}
+						slots={{
+							columnHeaders: () => (
+								<div
+									style={{
+										display: 'flex',
+										width: '100%',
+										backgroundColor: theme.palette.primary.light,
+										color: theme.palette.primary.contrastText,
+										fontWeight: 'bold',
+										paddingBottom: 8,
+										paddingTop: 8,
+										borderBottom: `1px solid ${theme.palette.divider}`,
+									}}>
+									{columns.map((column) => (
+										<div
+											key={column.field}
+											style={{
+												flex: column.width ? `0 0 ${column.width}px` : 1,
+												textAlign: column.headerAlign ?? 'left',
+												padding: '0 8px',
+											}}>
+											{column.headerName}
+										</div>
+									))}
+								</div>
+							),
+						}}
 					/>
 				</Box>
 			</Paper>
@@ -523,7 +541,7 @@ export default function CartsPage() {
 									(prod: Product) => prod.id === item.productId
 								);
 
-								const productPrice = product?.price || 0;
+								const productPrice = product?.price ?? 0;
 								const subtotal = productPrice * item.quantity;
 
 								return (
@@ -552,7 +570,7 @@ export default function CartsPage() {
 													<Box
 														component="img"
 														src={product.image}
-														alt={product.title || 'Product image'}
+														alt={product.title ?? 'Product image'}
 														sx={{
 															position: 'absolute',
 															width: '100%',
@@ -569,7 +587,7 @@ export default function CartsPage() {
 												<ListItemText
 													primary={
 														<Typography variant="subtitle1">
-															{product?.title || 'Unknown Product'}
+															{product?.title ?? 'Unknown Product'}
 														</Typography>
 													}
 													secondary={
@@ -578,7 +596,7 @@ export default function CartsPage() {
 																variant="body2"
 																color="text.secondary">
 																<strong>Category:</strong>{' '}
-																{product?.category || 'N/A'}
+																{product?.category ?? 'N/A'}
 															</Typography>
 															<Typography
 																variant="body2"
@@ -589,8 +607,8 @@ export default function CartsPage() {
 																variant="body2"
 																color="text.secondary">
 																<strong>Rating:</strong>{' '}
-																{product?.rating?.rate || 'N/A'}(
-																{product?.rating?.count || 0} reviews)
+																{product?.rating?.rate ?? 'N/A'}(
+																{product?.rating?.count ?? 0} reviews)
 															</Typography>
 														</Box>
 													}
@@ -600,7 +618,7 @@ export default function CartsPage() {
 													color="text.secondary"
 													sx={{ mt: 1 }}>
 													<strong>Description:</strong>{' '}
-													{product?.description || 'No description available'}
+													{product?.description ?? 'No description available'}
 												</Typography>
 											</Box>
 
@@ -648,9 +666,9 @@ export default function CartsPage() {
 						{selectedCartProducts?.products
 							.reduce((total, p) => {
 								const product = products.find(
-									(prod) => prod.id === p.productId
+									(prod: Product) => prod.id === p.productId
 								);
-								return total + (product?.price || 0) * p.quantity;
+								return total + (product?.price ?? 0) * p.quantity;
 							}, 0)
 							.toFixed(2)}
 					</Typography>

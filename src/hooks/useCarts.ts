@@ -21,7 +21,6 @@ export function useFilteredCarts(
 	dateRange: [Date | null, Date | null],
 	enabled = true
 ) {
-	// Check if date range filters are applied
 	const hasDateFilter = !!(dateRange[0] || dateRange[1]);
 
 	return useQuery({
@@ -30,16 +29,14 @@ export function useFilteredCarts(
 			const { data } = await api.get<Cart[]>('/carts');
 			return data;
 		},
-		select: (data) => {
-			// If no filters are applied and not explicitly enabled, return all data
+		select: (data: Cart[]) => {
 			if (!hasDateFilter) {
 				return data;
 			}
 
 			return data.filter((cart) => {
-				// Date range filtering
 				const cartDate = new Date(cart.date);
-				cartDate.setHours(0, 0, 0, 0); // Normalize cart date to start of day
+				cartDate.setHours(0, 0, 0, 0);
 
 				const matchesDateRange =
 					(!dateRange[0] || cartDate >= dateRange[0]) &&
@@ -63,8 +60,8 @@ export function useCreateCart() {
 			return data;
 		},
 		onSuccess: (newCart) => {
-			// Invalidate and refetch carts query
-			queryClient.invalidateQueries({ queryKey: cartsQueryKey });
+			// Invalidate and refetch carts query but the data will be replace to original data
+			// queryClient.invalidateQueries({ queryKey: cartsQueryKey });
 			// Optionally, update the cache directly
 			queryClient.setQueryData<Cart[]>(cartsQueryKey, (oldCarts) => {
 				if (!oldCarts) return [newCart];
