@@ -5,6 +5,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider } from '@/contexts/AuthContext';
 import QueryProvider from '@/providers/QueryProvider';
+import { Header } from '@/components/Header';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -31,7 +32,9 @@ export default function RootLayout({
 				<QueryProvider>
 					<ThemeProvider theme={theme}>
 						<CssBaseline />
-						<AuthProvider>{children}</AuthProvider>
+						<AuthProvider>
+							<Header /> {children}
+						</AuthProvider>
 					</ThemeProvider>
 				</QueryProvider>
 			</body>

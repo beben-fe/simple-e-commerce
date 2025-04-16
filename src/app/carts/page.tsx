@@ -320,9 +320,6 @@ export default function CartsPage() {
 	if (isLoadingProducts) {
 		return (
 			<Container maxWidth="lg" sx={{ my: 4 }}>
-				<Typography variant="h4" gutterBottom>
-					Carts Management
-				</Typography>
 				<Box sx={{ mb: 4 }}>
 					<Paper sx={{ p: 3, mb: 3 }}>
 						<Typography variant="h6" gutterBottom>
@@ -337,10 +334,6 @@ export default function CartsPage() {
 
 	return (
 		<Container maxWidth="lg" sx={{ my: 4 }}>
-			<Typography variant="h4" gutterBottom>
-				Carts Management
-			</Typography>
-
 			<Box sx={{ mb: 4 }}>
 				<Paper sx={{ p: 3, mb: 3 }}>
 					<Typography gutterBottom mb={3}>

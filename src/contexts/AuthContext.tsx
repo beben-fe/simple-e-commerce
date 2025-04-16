@@ -4,6 +4,8 @@ import {
 	useState,
 	useEffect,
 	ReactNode,
+	Dispatch,
+	SetStateAction,
 } from 'react';
 import Cookies from 'js-cookie';
 import { AuthState, LoginCredentials, User } from '@/types/auth';
@@ -14,6 +16,7 @@ interface AuthContextType extends AuthState {
 	login: (credentials: LoginCredentials) => Promise<void>;
 	logout: () => void;
 	authChecked: boolean;
+	setAuthChecked: Dispatch<SetStateAction<boolean>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -54,8 +57,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 						isAuthenticated: true,
 						token,
 					});
-					// Save the default user data
-					Cookies.set('user_data', JSON.stringify(defaultUser), { expires: 7 });
 				} else {
 					// Clear invalid cookies if no token
 					Cookies.remove('auth_token');
@@ -65,18 +66,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		}
 		// If we only have the token, create a default user
 		else if (token) {
-			const defaultUser: User = {
-				id: 1,
-				username: 'user',
-				email: 'user@example.com',
-			};
 			setAuthState({
-				user: defaultUser,
+				...authState,
 				isAuthenticated: true,
 				token,
 			});
-			// Save the default user data
-			Cookies.set('user_data', JSON.stringify(defaultUser), { expires: 7 });
 		}
 
 		setAuthChecked(true);
@@ -91,19 +85,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		onSuccess: (data) => {
 			const token = data.token;
 
-			// Mock user data
-			const user: User = {
-				id: 1,
-				username: data.username || 'user',
-				email: `${data.username || 'user'}@example.com`,
-			};
-
 			// Set cookies
 			Cookies.set('auth_token', token, { expires: 7 });
-			Cookies.set('user_data', JSON.stringify(user), { expires: 7 });
 
 			setAuthState({
-				user,
+				...authState,
 				isAuthenticated: true,
 				token,
 			});
@@ -131,7 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	};
 
 	return (
-		<AuthContext.Provider value={{ ...authState, login, logout, authChecked }}>
+		<AuthContext.Provider
+			value={{ ...authState, login, logout, authChecked, setAuthChecked }}>
 			{children}
 		</AuthContext.Provider>
 	);

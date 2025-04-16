@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
+import Cookies from 'js-cookie';
 import {
 	Container,
 	Paper,
@@ -23,7 +24,7 @@ export default function LoginPage() {
 	const { login, isAuthenticated, authChecked } = useAuth();
 	const [error, setError] = useState<string>('');
 	const [showSuccess, setShowSuccess] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(false);
 
 	const {
 		register,
@@ -45,6 +46,7 @@ export default function LoginPage() {
 	const onSubmit = async (data: LoginCredentials) => {
 		try {
 			await login(data);
+			Cookies.set('user_data', JSON.stringify({ username: data.username }));
 			setShowSuccess(true);
 			setTimeout(() => {
 				router.push('/carts');
@@ -133,7 +135,7 @@ export default function LoginPage() {
 							{...register('password', {
 								required: 'Password is required',
 								minLength: {
-									value: 4,
+									value: 8,
 									message: 'Password must be at least 8 characters',
 								},
 							})}
